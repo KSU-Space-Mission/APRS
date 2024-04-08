@@ -44,11 +44,9 @@ char  Symbol='O'; // '/O' for balloon, '/>' for car, for more info : http://www.
 bool  alternateSymbolTable = false ; //false = '/' , true = '\'
 
 char comment[50] = "LightAPRS by Niko and Yug made with love ;)";
-char StatusMessage[50] = "LightAPRS by Niko and Yug made w love and tears :)";
+char StatusMessage[50] = "placeholder";
 //*****************************************************************************
 
-
-// change back to 60 for the original code
 unsigned int   BeaconWait=60;  //seconds sleep for next beacon (TX).
 unsigned int   BattWait=60;    //seconds sleep if super capacitors/batteries are below BattMin (important if power source is solar panel)
 // changed from 4.5 to 2.5
@@ -199,7 +197,26 @@ void loop() {
 
       freeMem();
       Serial.flush();
-      sleepSeconds(BeaconWait);
+      // start of my code block
+      //above 10000 feet lets beacon every 3 minutes
+      if (gps.altitude.feet() > 10000)
+      {
+        // sleep for 180
+          sleepSeconds(BeaconWait * 3);
+      }
+      // if we are moving more than 1 mph and we are 2000 ft or less (close) to the ground, start pininging quick
+      else if ((gps.altitude.feet() < 2000) && (gps.speed.knots() > 1))
+      {
+        sleepSeconds(BeaconWait / 6);
+      }
+      //otherwise beacon ever 60 seconds
+      else
+      {
+          sleepSeconds(BeaconWait);
+      }
+      // end of my code block
+      //uncomment this later
+      //sleepSeconds(BeaconWait);
 
       } else {
 #if defined(DEVMODE)
