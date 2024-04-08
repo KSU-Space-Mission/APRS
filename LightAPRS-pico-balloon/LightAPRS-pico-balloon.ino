@@ -30,25 +30,31 @@
 #define AprsPinInput  pinMode(12,INPUT);pinMode(13,INPUT);pinMode(14,INPUT);pinMode(15,INPUT)
 #define AprsPinOutput pinMode(12,OUTPUT);pinMode(13,OUTPUT);pinMode(14,OUTPUT);pinMode(15,OUTPUT)
 
+// this is for texting the radio towers and the web server
 //#define DEVMODE // Development mode. Uncomment to enable for debugging.
 
 //https://github.com/lightaprs/LightAPRS-1.0/wiki/Tips-&-Tricks-for-Pico-Balloons
 
 //****************************************************************************
-char  CallSign[7]="NOCALL"; //DO NOT FORGET TO CHANGE YOUR CALLSIGN
-int   CallNumber=11; //SSID http://www.aprs.org/aprs11/SSIDs.txt
+// i think this call sisgn is N0ZAZ with a zero
+char CallSign[6] = "N0ZAZ"; //DO NOT FORGET TO CHANGE YOUR CALLSIGN
+// call sign 11 is for balloons (this is for radio operators to know what they are looking at)
+int   CallNumber = 11; //SSID http://www.aprs.org/aprs11/SSIDs.txt
 char  Symbol='O'; // '/O' for balloon, '/>' for car, for more info : http://www.aprs.org/symbols/symbols-new.txt
 bool  alternateSymbolTable = false ; //false = '/' , true = '\'
 
-char comment[50] = "http://www.lightaprs.com"; // Max 50 char
-char StatusMessage[50] = "LightAPRS by TA2NHP & TA2MUN";
+char comment[50] = "LightAPRS by Niko and Yug made with love ;)";
+char StatusMessage[50] = "LightAPRS by Niko and Yug made w love and tears :)";
 //*****************************************************************************
 
 
+// change back to 60 for the original code
 unsigned int   BeaconWait=60;  //seconds sleep for next beacon (TX).
 unsigned int   BattWait=60;    //seconds sleep if super capacitors/batteries are below BattMin (important if power source is solar panel)
-float BattMin=4.5;        // min Volts to wake up.
-float DraHighVolt=5.0;    // min Volts for radio module (DRA818V) to transmit (TX) 1 Watt, below this transmit 0.5 Watt.
+// changed from 4.5 to 2.5
+float BattMin=2.5;        // min Volts to wake up.
+//changed from 5 to 3.5
+float DraHighVolt=3.5;    // min Volts for radio module (DRA818V) to transmit (TX) 1 Watt, below this transmit 0.5 Watt.
 float GpsMinVolt=4.0; //min Volts for GPS to wake up. (important if power source is solar panel)
 
 boolean aliveStatus = true; //for tx status message on first wake-up just once.
@@ -197,7 +203,7 @@ void loop() {
 
       } else {
 #if defined(DEVMODE)
-      Serial.println(F("Not enough sattelites"));
+      Serial.println(F("Not enough satelites"));
 #endif
       }
     }
