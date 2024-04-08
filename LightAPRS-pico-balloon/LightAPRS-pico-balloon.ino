@@ -46,32 +46,32 @@ char StatusMessage[50] = "LightAPRS by TA2NHP & TA2MUN";
 
 
 unsigned int   BeaconWait=60;  //seconds sleep for next beacon (TX).
-unsigned int   BattWait=60;    //seconds sleep if super capacitors/batteries are below BattMin (important if power source is solar panel) 
+unsigned int   BattWait=60;    //seconds sleep if super capacitors/batteries are below BattMin (important if power source is solar panel)
 float BattMin=4.5;        // min Volts to wake up.
 float DraHighVolt=5.0;    // min Volts for radio module (DRA818V) to transmit (TX) 1 Watt, below this transmit 0.5 Watt.
-float GpsMinVolt=4.0; //min Volts for GPS to wake up. (important if power source is solar panel) 
+float GpsMinVolt=4.0; //min Volts for GPS to wake up. (important if power source is solar panel)
 
 boolean aliveStatus = true; //for tx status message on first wake-up just once.
 
-//do not change WIDE path settings below if you don't know what you are doing :) 
+//do not change WIDE path settings below if you don't know what you are doing :)
 byte  Wide1=1; // 1 for WIDE1-1 path
 byte  Wide2=1; // 1 for WIDE2-1 path
 
 /**
-Airborne stations above a few thousand feet should ideally use NO path at all, or at the maximum just WIDE2-1 alone.  
-Due to their extended transmit range due to elevation, multiple digipeater hops are not required by airborne stations.  
-Multi-hop paths just add needless congestion on the shared APRS channel in areas hundreds of miles away from the aircraft's own location.  
-NEVER use WIDE1-1 in an airborne path, since this can potentially trigger hundreds of home stations simultaneously over a radius of 150-200 miles. 
+Airborne stations above a few thousand feet should ideally use NO path at all, or at the maximum just WIDE2-1 alone.
+Due to their extended transmit range due to elevation, multiple digipeater hops are not required by airborne stations.
+Multi-hop paths just add needless congestion on the shared APRS channel in areas hundreds of miles away from the aircraft's own location.
+NEVER use WIDE1-1 in an airborne path, since this can potentially trigger hundreds of home stations simultaneously over a radius of 150-200 miles.
  */
 int pathSize=2; // 2 for WIDE1-N,WIDE2-N ; 1 for WIDE2-N
-boolean autoPathSizeHighAlt = true; //force path to WIDE2-N only for high altitude (airborne) beaconing (over 1.000 meters (3.280 feet)) 
+boolean autoPathSizeHighAlt = true; //force path to WIDE2-N only for high altitude (airborne) beaconing (over 1.000 meters (3.280 feet))
 
 boolean beaconViaARISS = false; //there are no iGates in some regions (such as North Africa,  Oceans, etc) so try to beacon via ARISS (International Space Station) https://www.amsat.org/amateur-radio-on-the-iss/
 
-// GEOFENCE 
+// GEOFENCE
 uint32_t GEOFENCE_APRS_frequency      = 144800000; //default frequency before geofencing. This variable will be updated based on GPS location.
-uint32_t GEOFENCE_no_tx               = 0; 
-boolean arissModEnabled = false; //do not change this, temp value. 
+uint32_t GEOFENCE_no_tx               = 0;
+boolean arissModEnabled = false; //do not change this, temp value.
 
 boolean radioSetup = false;
 boolean GpsFirstFix=false;
@@ -80,13 +80,13 @@ boolean ublox_high_alt_mode_enabled = false; //do not change this.
 static char telemetry_buff[100];// telemetry buffer
 uint16_t TxCount = 1;
 
-struct Date 
-{ 
-    int d, m, y; 
-}; 
+struct Date
+{
+    int d, m, y;
+};
 
-const int monthDays[12] = {31, 28, 31, 30, 31, 30, 
-                           31, 31, 30, 31, 30, 31}; 
+const int monthDays[12] = {31, 28, 31, 30, 31, 30,
+                           31, 31, 30, 31, 30, 31};
 
 TinyGPSPlus gps;
 Adafruit_BMP085 bmp;
@@ -111,33 +111,33 @@ void setup() {
 #if defined(DEVMODE)
   Serial.println(F("Start"));
 #endif
-      
+
   APRS_init(ADC_REFERENCE, OPEN_SQUELCH);
   APRS_setCallsign(CallSign,CallNumber);
   APRS_setDestination("APLIGA", 0);
   APRS_setMessageDestination("APLIGA", 0);
   APRS_setPath1("WIDE1", Wide1);
   APRS_setPath2("WIDE2", Wide2);
-  APRS_useAlternateSymbolTable(alternateSymbolTable); 
+  APRS_useAlternateSymbolTable(alternateSymbolTable);
   APRS_setSymbol(Symbol);
-  //increase following value (for example to 500UL) if you experience packet loss/decode issues. 
-  APRS_setPreamble(350UL);  
+  //increase following value (for example to 500UL) if you experience packet loss/decode issues.
+  APRS_setPreamble(350UL);
   APRS_setPathSize(pathSize);
   AprsPinInput;
-  
+
   bmp.begin();
 }
 
 void loop() {
    wdt_reset();
-  
+
   if (readBatt() > BattMin) {
-  
-  
+
+
   if(aliveStatus){
 
       //send status tx on startup once (before gps fix)
-      
+
       #if defined(DEVMODE)
         Serial.println(F("Sending"));
       #endif
@@ -145,24 +145,24 @@ void loop() {
       #if defined(DEVMODE)
         Serial.println(F("Sent"));
       #endif
-      
+
       aliveStatus = false;
 
       while (readBatt() < BattMin) {
-        sleepSeconds(BattWait); 
+        sleepSeconds(BattWait);
       }
-      
+
    }
-    
+
     updateGpsData(1000);
     gpsDebug();
 
-    
+
     if ((gps.location.age() < 1000 || gps.location.isUpdated()) && gps.location.isValid()) {
       if (gps.satellites.isValid() && (gps.satellites.value() > 3)) {
       updatePosition();
       updateTelemetry();
-      
+
       GpsOFF;
       ublox_high_alt_mode_enabled = false; //gps sleep mode resets high altitude mode.
       GpsFirstFix=true;
@@ -171,18 +171,18 @@ void loop() {
             //force to use high altitude settings (WIDE2-n)
             APRS_setPathSize(1);
         } else {
-            //use default settings  
+            //use default settings
             APRS_setPathSize(pathSize);
         }
-          
+
       //APRS frequency isn't the same for the whole world. (for pico balloon only)
       if (!radioSetup) {
         configureFreqbyLocation();
-      }          
-      
+      }
+
       //send status message every 60 minutes
-      if(gps.time.minute() == 0){               
-        sendStatus();       
+      if(gps.time.minute() == 0){
+        sendStatus();
       } else {
 
         //in some countries Airborne APRS is not allowed. (for pico balloon only)
@@ -200,24 +200,24 @@ void loop() {
       Serial.println(F("Not enough sattelites"));
 #endif
       }
-    } 
+    }
   } else {
 
     sleepSeconds(BattWait);
-    
+
   }
-  
+
 }
 
 void aprs_msg_callback(struct AX25Msg *msg) {
   //do not remove this function, necessary for LibAPRS
 }
 
-void sleepSeconds(int sec) {  
+void sleepSeconds(int sec) {
   if (GpsFirstFix){//sleep gps after first fix
       GpsOFF;
       ublox_high_alt_mode_enabled = false;//gps sleep mode resets high altitude mode.
-    } 
+    }
   RfOFF;
   RfPttOFF;
   Serial.flush();
@@ -226,8 +226,8 @@ void sleepSeconds(int sec) {
     if (readBatt() < GpsMinVolt){
       GpsOFF;
       ublox_high_alt_mode_enabled = false;//gps sleep mode resets high altitude mode.
-    } 
-    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_ON);   
+    }
+    LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_ON);
   }
    wdt_enable(WDTO_8S);
 }
@@ -239,7 +239,7 @@ boolean isAirborneAPRSAllowed() {
   float tempLong = gps.location.lng();
 
   GEOFENCE_position(tempLat,tempLong);
-  
+
   boolean airborne = true;
 
   if(GEOFENCE_no_tx==1) {
@@ -259,8 +259,8 @@ boolean inARISSGeoFence(float tempLat, float tempLong) {
   //North Pacific
   if(tempLat>28 && tempLat<50 && tempLong>-180 && tempLong<-130){ariss = true;}
   //North Atlantic
-  if(tempLat>25 && tempLat<42 && tempLong>-60 && tempLong<-33){ariss = true;} 
- 
+  if(tempLat>25 && tempLat<42 && tempLong>-60 && tempLong<-33){ariss = true;}
+
   return ariss;
 }
 
@@ -279,14 +279,14 @@ void configureFreqbyLocation() {
     arissModEnabled = true;
   } else {
 
-    GEOFENCE_position(tempLat,tempLong);  
+    GEOFENCE_position(tempLat,tempLong);
     float dividedFreq = GEOFENCE_APRS_frequency / 1000000.f;
     char aprsFreq_buff[9];
     dtostrf(dividedFreq, 8, 4, aprsFreq_buff);
-    configDra818(aprsFreq_buff);    
+    configDra818(aprsFreq_buff);
     arissModEnabled = false;
   }
-  
+
   radioSetup = true;
 }
 
@@ -383,7 +383,7 @@ void updatePosition() {
 
 
 void updateTelemetry() {
- 
+
   sprintf(telemetry_buff, "%03d", gps.course.isValid() ? (int)gps.course.deg() : 0);
   telemetry_buff[3] = '/';
   sprintf(telemetry_buff + 4, "%03d", gps.speed.isValid() ? (int)gps.speed.knots() : 0);
@@ -401,8 +401,8 @@ void updateTelemetry() {
   } else{
     //for negative values
     sprintf(telemetry_buff + 10, "%06d", (long)tempAltitude);
-    } 
-  
+    }
+
   telemetry_buff[16] = ' ';
   sprintf(telemetry_buff + 17, "%03d", TxCount);
   telemetry_buff[20] = 'T';
@@ -424,7 +424,7 @@ void updateTelemetry() {
   telemetry_buff[52] = 'S';
   telemetry_buff[53] = ' ';
   sprintf(telemetry_buff + 54, "%s", comment);
-  
+
 
 #if defined(DEVMODE)
   Serial.println(telemetry_buff);
@@ -456,7 +456,7 @@ void sendLocation() {
   delay(2000);
   RfPttON;
   delay(1000);
-  
+
   //APRS_sendLoc(telemetry_buff, strlen(telemetry_buff)); //beacon without timestamp
   APRS_sendLocWtTmStmp(telemetry_buff, strlen(telemetry_buff), timestamp_buff); //beacon with timestamp
   delay(50);
@@ -487,7 +487,7 @@ void sendStatus() {
     firstDayCheck = EEPROM.read(0);
 
     Date today = {gps.date.day(), gps.date.month(), gps.date.year()};
-    
+
     int firstDay = 0;
     int firstMonth = 0;
     int firstYear = 0;
@@ -497,14 +497,14 @@ void sendStatus() {
       firstMonth = EEPROM.read(2);
       firstYear = EEPROM.read(3);
 
-      Date firstDate = {firstDay, firstMonth, firstYear+2000};    
+      Date firstDate = {firstDay, firstMonth, firstYear+2000};
 
       difference = getDifference(firstDate,today);
       char diffBuf[4];
       sprintf(diffBuf,"%d",difference+1);
 
       sprintf(status_buff, "%s%s%s%s", "Day ",diffBuf," ",StatusMessage);
-          
+
     } else {
       //write today's (first day) date
       EEPROM.update(0, 1); //check
@@ -513,19 +513,19 @@ void sendStatus() {
       EEPROM.update(3, gps.date.year() % 2000); //year
 
       sprintf(status_buff, "%s%s", "Day 1 ",StatusMessage);
-    }    
-    
+    }
+
   } else {
-    
+
     sprintf(status_buff, "%s", StatusMessage);
   }
-  
+
   AprsPinOutput;
   RfON;
   delay(2000);
   RfPttON;
   delay(1000);
-    
+
   APRS_sendStatus(status_buff, strlen(status_buff));
   delay(50);
   while(digitalRead(1)){;}//LibAprs TX Led pin PB1
@@ -541,45 +541,45 @@ void sendStatus() {
 
 }
 
-int countLeapYears(Date d) 
-{ 
-    int years = d.y; 
-  
-    // Check if the current year needs to be considered 
-    // for the count of leap years or not 
-    if (d.m <= 2) 
-        years--; 
-  
-    // An year is a leap year if it is a multiple of 4, 
-    // multiple of 400 and not a multiple of 100. 
-    return years / 4 - years / 100 + years / 400; 
-} 
-  
-int getDifference(Date dt1, Date dt2) 
-{ 
-    // COUNT TOTAL NUMBER OF DAYS BEFORE FIRST DATE 'dt1' 
-  
-    // initialize count using years and day 
-    long int n1 = dt1.y*365 + dt1.d; 
-  
-    // Add days for months in given date 
-    for (int i=0; i<dt1.m - 1; i++) 
-        n1 += monthDays[i]; 
-  
-    // Since every leap year is of 366 days, 
-    // Add a day for every leap year 
-    n1 += countLeapYears(dt1); 
-  
-    // SIMILARLY, COUNT TOTAL NUMBER OF DAYS BEFORE 'dt2' 
-  
-    long int n2 = dt2.y*365 + dt2.d; 
-    for (int i=0; i<dt2.m - 1; i++) 
-        n2 += monthDays[i]; 
-    n2 += countLeapYears(dt2); 
-  
-    // return difference between two counts 
-    return (n2 - n1); 
-} 
+int countLeapYears(Date d)
+{
+    int years = d.y;
+
+    // Check if the current year needs to be considered
+    // for the count of leap years or not
+    if (d.m <= 2)
+        years--;
+
+    // An year is a leap year if it is a multiple of 4,
+    // multiple of 400 and not a multiple of 100.
+    return years / 4 - years / 100 + years / 400;
+}
+
+int getDifference(Date dt1, Date dt2)
+{
+    // COUNT TOTAL NUMBER OF DAYS BEFORE FIRST DATE 'dt1'
+
+    // initialize count using years and day
+    long int n1 = dt1.y*365 + dt1.d;
+
+    // Add days for months in given date
+    for (int i=0; i<dt1.m - 1; i++)
+        n1 += monthDays[i];
+
+    // Since every leap year is of 366 days,
+    // Add a day for every leap year
+    n1 += countLeapYears(dt1);
+
+    // SIMILARLY, COUNT TOTAL NUMBER OF DAYS BEFORE 'dt2'
+
+    long int n2 = dt2.y*365 + dt2.d;
+    for (int i=0; i<dt2.m - 1; i++)
+        n2 += monthDays[i];
+    n2 += countLeapYears(dt2);
+
+    // return difference between two counts
+    return (n2 - n1);
+}
 
 
 static void updateGpsData(int ms)
@@ -592,11 +592,11 @@ static void updateGpsData(int ms)
       setGPS_DynamicModel6();
       #if defined(DEVMODE)
         Serial.println(F("ublox DynamicModel6 enabled..."));
-      #endif      
+      #endif
       ublox_high_alt_mode_enabled = true;
-      
+
    }
-  
+
   while (!Serial1) {
     delayMicroseconds(1); // wait for serial port to connect.
   }
@@ -619,7 +619,7 @@ float readBatt() {
   float R1 = 560000.0; // 560K
   float R2 = 100000.0; // 100K
   float value = 0.0;
-  do { 
+  do {
     value =analogRead(BattPin);
     delay(5);
     value =analogRead(BattPin);
@@ -747,7 +747,7 @@ void setGPS_DynamicModel6()
  0x05, 0x00, 0xFA, 0x00, 0xFA, 0x00, 0x64, 0x00, 0x2C,
  0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x16, 0xDC };
- 
+
  while(!gps_set_sucess)
  {
  sendUBX(setdm6, sizeof(setdm6)/sizeof(uint8_t));
@@ -768,7 +768,7 @@ boolean getUBX_ACK(uint8_t *MSG) {
  uint8_t ackByteID = 0;
  uint8_t ackPacket[10];
  unsigned long startTime = millis();
- 
+
 // Construct the expected ACK packet
  ackPacket[0] = 0xB5; // header
  ackPacket[1] = 0x62; // header
@@ -780,30 +780,30 @@ boolean getUBX_ACK(uint8_t *MSG) {
  ackPacket[7] = MSG[3]; // ACK id
  ackPacket[8] = 0; // CK_A
  ackPacket[9] = 0; // CK_B
- 
+
 // Calculate the checksums
  for (uint8_t ubxi=2; ubxi<8; ubxi++) {
  ackPacket[8] = ackPacket[8] + ackPacket[ubxi];
  ackPacket[9] = ackPacket[9] + ackPacket[8];
  }
- 
+
 while (1) {
- 
+
 // Test for success
  if (ackByteID > 9) {
  // All packets in order!
  return true;
  }
- 
+
 // Timeout if no valid response in 3 seconds
  if (millis() - startTime > 3000) {
  return false;
  }
- 
+
 // Make sure data is available to read
  if (Serial1.available()) {
  b = Serial1.read();
- 
+
 // Check that bytes arrive in sequence as per expected ACK packet
  if (b == ackPacket[ackByteID]) {
  ackByteID++;
